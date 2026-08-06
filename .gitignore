@@ -1,0 +1,8 @@
+.databricks/
+!.databricks/bundle/prod/variables.json.example
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store

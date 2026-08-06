@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <div class="card-header">
+    <h2>Orders <small>(synced from Unity Catalog via Lakebase)</small></h2>
+    <input
+      id="order-search"
+      type="search"
+      placeholder="Search customer, item, status..."
+      value="{{ search }}"
+      autocomplete="off"
+    >
+  </div>
+
+  {% if orders_error %}
+    <p class="empty">{{ orders_error }}</p>
+  {% else %}
+  <table>
+    <thead>
+      <tr>
+        <th>Order ID</th><th>Customer</th><th>Item</th>
+        <th>Qty</th><th>Amount</th><th>Status</th><th>Ordered At</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body" data-page="{{ orders_page.page }}">
+      {% if not orders_page.items %}
+      <tr><td colspan="7" class="empty">No matching orders.</td></tr>
+      {% endif %}
+      {% for o in orders_page.items %}
+      <tr>
+        <td>{{ o[0] }}</td>
+        <td>{{ o[1] }}</td>
+        <td>{{ o[2] }}</td>
+        <td>{{ o[3] }}</td>
+        <td>${{ '%.2f' % o[4] }}</td>
+        <td><span class="badge badge-{{ o[5] }}">{{ o[5] }}</span></td>
+        <td>{{ o[6] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if orders_page.total_pages > 1 %}
+  <div class="pagination">
+    {% if orders_page.has_prev %}
+      <a href="{{ url_for('index', page=orders_page.page - 1, q=search) }}">&larr; Prev</a>
+    {% else %}
+      <span class="disabled">&larr; Prev</span>
+    {% endif %}
+    <span>Page {{ orders_page.page }} of {{ orders_page.total_pages }} ({{ orders_page.total }} orders)</span>
+    {% if orders_page.has_next %}
+      <a href="{{ url_for('index', page=orders_page.page + 1, q=search) }}">Next &rarr;</a>
+    {% else %}
+      <span class="disabled">Next &rarr;</span>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Notes <small>(read/write directly against Lakebase Postgres)</small></h2>
+  <form action="{{ url_for('add_note') }}" method="post" class="note-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="content" placeholder="Add a note..." required maxlength="280">
+    <button type="submit">Add</button>
+  </form>
+
+  <ul class="notes" id="notes-list">
+    {% if not notes_page.items %}
+      <li class="empty">No notes yet — add one above.</li>
+    {% endif %}
+    {% for n in notes_page.items %}
+    <li data-id="{{ n[0] }}">
+      <span>{{ n[1] }}</span>
+      <span class="meta">
+        {{ n[2] }}
+        <form action="{{ url_for('remove_note', note_id=n[0]) }}" method="post" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-btn">delete</button>
+        </form>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% endblock %}

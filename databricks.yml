@@ -1,0 +1,235 @@
+# ============================================================================
+# lakebase-orders-app — Databricks Asset Bundle (DAB)
+#
+# Deploys a production-ready Lakebase Autoscaling project plus a Databricks
+# App ("Orders Dashboard") that reads a continuously synced Unity Catalog
+# table and lets users write notes back into Postgres.
+#
+# Structure follows the "typical Lakebase project" pattern:
+#   https://learn.microsoft.com/en-us/azure/databricks/oltp/projects/dabs-typical-project
+#
+# Resources created:
+#   - postgres_projects   : the Lakebase project (compute + Postgres version)
+#   - postgres_branches   : a protected "production" branch
+#   - postgres_endpoints  : an HA read-write endpoint w/ readable secondaries
+#   - postgres_synced_tables : continuous sync from a UC Delta table -> Postgres
+#   - postgres_catalogs   : UC catalog binding so the Lakebase DB is queryable as UC data
+#   - apps                : the Databricks App (Flask) wired to the project
+# ============================================================================
+
+bundle:
+  name: lakebase-orders-app
+
+# Keep the uploaded bundle lean — tests, caches, and local venvs never need
+# to leave the developer's machine.
+sync:
+  exclude:
+    - tests/**
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+    - .venv/**
+    - .pytest_cache/**
+    - .ruff_cache/**
+    - .env
+
+variables:
+  project_id:
+    description: 'Lakebase project ID (lowercase, hyphen-delimited)'
+    default: 'orders-lakebase-project'
+  display_name:
+    description: 'Human-readable project name shown in the UI'
+    default: 'Orders Lakebase Project'
+  pg_version:
+    description: 'Postgres major version'
+    default: 17
+  min_cu:
+    description: 'Minimum compute units on the default endpoint'
+    default: 0.5
+  max_cu:
+    description: 'Maximum compute units on the default endpoint'
+    default: 4.0
+  suspend_timeout:
+    description: 'Idle time before the default endpoint suspends. Ignored when no_suspension is true.'
+    default: '300s'
+  admin_sp_app_id:
+    description: 'Application ID of the service principal to grant CAN_MANAGE on the project'
+    default: '<your-sp-application-id>'
+  source_table:
+    description: 'Unity Catalog three-part name of the Delta table to sync (catalog.schema.table)'
+    default: '<catalog>.<schema>.orders'
+  primary_key_column:
+    description: 'Primary key column of the source Delta table'
+    default: 'order_id'
+  storage_catalog:
+    description: 'Unity Catalog catalog where the sync pipeline stores its metadata'
+    default: '<catalog>'
+  storage_schema:
+    description: 'Unity Catalog schema where the sync pipeline stores its metadata'
+    default: '<schema>'
+  app_name:
+    description: 'Databricks App name (must be unique in the workspace)'
+    default: 'orders-dashboard'
+  uc_catalog_id:
+    description: 'Name to register the Lakebase database in Unity Catalog'
+    default: 'orders_lakebase_uc_catalog'
+
+targets:
+  dev:
+    mode: development
+    workspace:
+      host: https://<your-workspace>.cloud.databricks.com
+    resources:
+      postgres_projects:
+        lakebase_project:
+          project_id: 'dev-${var.project_id}'
+          spec:
+            pg_version: ${var.pg_version}
+            display_name: 'DEV - ${var.display_name}'
+            default_endpoint_settings:
+              autoscaling_limit_min_cu: 0.5
+              autoscaling_limit_max_cu: 1.0
+              suspend_timeout_duration: '300s'
+
+      postgres_branches:
+        production:
+          branch_id: production
+          parent: ${resources.postgres_projects.lakebase_project.name}
+          no_expiry: false
+          is_protected: false
+          replace_existing: true
+
+      postgres_endpoints:
+        primary:
+          endpoint_id: primary
+          parent: ${resources.postgres_branches.production.name}
+          endpoint_type: ENDPOINT_TYPE_READ_WRITE
+          autoscaling_limit_min_cu: 0.5
+          autoscaling_limit_max_cu: 1.0
+          no_suspension: false
+          replace_existing: true
+
+      apps:
+        lakebase_app:
+          name: 'dev-${var.app_name}'
+          description: 'DEV - Orders dashboard backed by Lakebase autoscaling'
+          source_code_path: ./app_src
+          config:
+            command:
+              - gunicorn
+              - -b
+              - 0.0.0.0:8000
+              - --workers=2
+              - --threads=2
+              - --timeout=30
+              - app:app
+            env:
+              - name: POOL_MAX_SIZE
+                value: '5'
+          resources:
+            - name: lakebase-db
+              postgres:
+                branch: ${resources.postgres_branches.production.name}
+                database: ${resources.postgres_branches.production.name}/databases/databricks-postgres
+                permission: CAN_CONNECT_AND_CREATE
+
+  prod:
+    default: true
+    workspace:
+      host: https://<your-workspace>.cloud.databricks.com
+
+    resources:
+      # Project — top-level container for branches, endpoints, and databases.
+      # The permissions block grants workspace-level CAN_MANAGE to the service principal.
+      postgres_projects:
+        lakebase_project:
+          project_id: ${var.project_id}
+          spec:
+            pg_version: ${var.pg_version}
+            display_name: ${var.display_name}
+            default_endpoint_settings:
+              autoscaling_limit_min_cu: ${var.min_cu}
+              autoscaling_limit_max_cu: ${var.max_cu}
+              suspend_timeout_duration: ${var.suspend_timeout}
+          permissions:
+            - service_principal_name: ${var.admin_sp_app_id}
+              level: CAN_MANAGE
+
+      # Configure the implicitly created production branch as protected.
+      postgres_branches:
+        production:
+          branch_id: production
+          parent: ${resources.postgres_projects.lakebase_project.name}
+          no_expiry: true
+          is_protected: true
+          replace_existing: true
+
+      # Configure the implicitly created primary endpoint with HA.
+      # HA requires no_suspension: true. group.min: 2 adds a standby for automatic failover.
+      postgres_endpoints:
+        primary:
+          endpoint_id: primary
+          parent: ${resources.postgres_branches.production.name}
+          endpoint_type: ENDPOINT_TYPE_READ_WRITE
+          autoscaling_limit_min_cu: ${var.min_cu}
+          autoscaling_limit_max_cu: ${var.max_cu}
+          no_suspension: true
+          group:
+            min: 2
+            max: 2
+            enable_readable_secondaries: true
+          replace_existing: true
+
+      # Sync a Unity Catalog Delta table into the project continuously.
+      # Comment this block out (and postgres_catalogs below) if you don't need data sync yet.
+      postgres_synced_tables:
+        orders_sync:
+          synced_table_id: '${var.storage_catalog}.${var.storage_schema}.orders_synced'
+          branch: ${resources.postgres_branches.production.name}
+          postgres_database: databricks_postgres
+          source_table_full_name: ${var.source_table}
+          primary_key_columns:
+            - ${var.primary_key_column}
+          scheduling_policy: CONTINUOUS
+          create_database_objects_if_missing: true
+          new_pipeline_spec:
+            storage_catalog: ${var.storage_catalog}
+            storage_schema: ${var.storage_schema}
+
+      # Bind the Lakebase database into Unity Catalog so it is queryable as UC data.
+      postgres_catalogs:
+        lakebase_uc_catalog:
+          catalog_id: ${var.uc_catalog_id}
+          postgres_database: databricks_postgres
+          branch: ${resources.postgres_branches.production.name}
+          create_database_if_missing: true
+
+      # Databricks App connected to the project.
+      # The database value references databricks_postgres — the stable ID of the implicit
+      # database that every Lakebase project creates automatically.
+      apps:
+        lakebase_app:
+          name: ${var.app_name}
+          description: 'Orders dashboard backed by Lakebase autoscaling'
+          source_code_path: ./app_src
+          config:
+            command:
+              - gunicorn
+              - -b
+              - 0.0.0.0:8000
+              - --workers=4
+              - --threads=4
+              - --timeout=30
+              - --graceful-timeout=15
+              - --keep-alive=5
+              - app:app
+            env:
+              - name: POOL_MAX_SIZE
+                value: '20'
+              - name: CREDENTIAL_RETRIES
+                value: '4'
+          resources:
+            - name: lakebase-db
+              postgres:
+                branch: ${resources.postgres_branches.production.name}
+                database: ${resources.postgres_branches.production.name}/databases/databricks-postgres
+                permission: CAN_CONNECT_AND_CREATE

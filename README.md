@@ -75,6 +75,40 @@ lakebase-orders-app/
   `CAN_CONNECT_AND_CREATE` permission.
 - Workspace `CAN_MANAGE` permission on the project for your service principal.
 
+## Architecture diagram
+
+```mermaid
+flowchart LR
+    User[User Browser]
+    App[Databricks App\nFlask Orders Dashboard]
+    API[/Routes and JSON API\n slash, slash api slash orders, slash api slash notes/]
+    Notes[(Lakebase Postgres\nnotes table)]
+    Orders[(Lakebase Postgres\norders_synced table)]
+    OAuth[WorkspaceClient\nGenerate DB Credential]
+    Endpoint[Lakebase Endpoint\nHA Read/Write + Readable Secondaries]
+    Sync[postgres_synced_tables\ncontinuous sync]
+    Delta[(Unity Catalog Delta Table\nmain.sales.orders with CDF)]
+    UCBind[postgres_catalogs\nUC Binding]
+    SQL[SQL Warehouses and Notebooks]
+
+    User --> App
+    App --> API
+    API --> Notes
+    API --> Orders
+    App --> OAuth --> Endpoint
+    Endpoint --> Notes
+    Endpoint --> Orders
+    Delta --> Sync --> Orders
+    Endpoint --> UCBind --> SQL
+```
+
+High-level flow:
+- Users interact with the Databricks App UI.
+- The app reads synced operational data from `orders_synced` and writes user notes to `notes`.
+- Lakebase credentials are minted as short-lived OAuth database tokens via Databricks SDK.
+- `postgres_synced_tables` continuously mirrors the Unity Catalog Delta source table into Lakebase Postgres.
+- `postgres_catalogs` binds the Lakebase database back into Unity Catalog for analytics access.
+
 ## Prerequisites
 
 1. **Databricks CLI v1.0.0+**

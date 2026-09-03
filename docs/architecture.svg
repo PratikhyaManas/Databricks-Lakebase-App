@@ -91,14 +91,14 @@
   <path class="edge" d="M890 235 H940" />
 
   <path class="edge" d="M550 405 H592 V409 H635" />
-  <path class="edge" d="M550 425 H760 V409 H970" />
+  <path class="edge" d="M550 425 H930 V409 H970" />
 
-  <path class="edge" d="M1120 290 V320 H760 V348" />
+  <path class="edge" d="M1030 290 V320 H760 V348" />
   <path class="edge" d="M1120 290 V348" />
 
   <path class="edge" d="M885 597 H932 V610 H980" />
   <path class="edge" d="M1120 560 V470" />
 
-  <path class="edge" d="M1120 290 V500 H1115 V710" />
+  <path class="edge" d="M1210 290 V690 H1115 V710" />
   <path class="edge" d="M1230 758 H1270" />
 </svg>

@@ -16,10 +16,9 @@ import secrets
 import time
 import uuid
 
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, g
-
 import db
 from config import settings
+from flask import Flask, flash, g, jsonify, redirect, render_template, request, session, url_for
 from serializers import note_to_dict, order_to_dict
 
 logging.basicConfig(
@@ -81,6 +80,13 @@ def _require_csrf():
     return bool(token and submitted and secrets.compare_digest(token, submitted))
 
 
+def _reject_if_missing_csrf():
+    if _require_csrf():
+        return None
+    flash("Session expired, please try again.")
+    return redirect(url_for("index"))
+
+
 def _parse_list_query_args() -> tuple[int, str | None]:
     page = max(1, request.args.get("page", 1, type=int))
     search = (request.args.get("q") or "").strip() or None
@@ -113,9 +119,9 @@ def index():
 
 @app.route("/notes", methods=["POST"])
 def add_note():
-    if not _require_csrf():
-        flash("Session expired, please try again.")
-        return redirect(url_for("index"))
+    csrf_failure = _reject_if_missing_csrf()
+    if csrf_failure:
+        return csrf_failure
     content = (request.form.get("content") or "").strip()
     try:
         db.insert_note(content)
@@ -126,9 +132,9 @@ def add_note():
 
 @app.route("/notes/<int:note_id>/delete", methods=["POST"])
 def remove_note(note_id):
-    if not _require_csrf():
-        flash("Session expired, please try again.")
-        return redirect(url_for("index"))
+    csrf_failure = _reject_if_missing_csrf()
+    if csrf_failure:
+        return csrf_failure
     db.delete_note(note_id)
     return redirect(url_for("index"))
 

@@ -123,12 +123,12 @@ class FakeCursor:
         self._result = rows[offset: offset + limit]
 
     def _insert_note(self, params):
-        from datetime import datetime, timezone
+        from datetime import UTC, datetime
 
         (content,) = params
         self.conn.db.next_note_id += 1
         self.conn.db.notes.append(
-            (self.conn.db.next_note_id, content, datetime.now(timezone.utc))
+            (self.conn.db.next_note_id, content, datetime.now(UTC))
         )
 
     def _delete_note(self, params):
@@ -169,13 +169,13 @@ class FakeDB:
     """In-memory notes/orders store standing in for Postgres."""
 
     def __init__(self):
-        from datetime import datetime, timezone
+        from datetime import UTC, datetime
 
         self.notes = []
         self.next_note_id = 0
         self.orders = [
-            (1, "Ava Chen", "Wireless Mouse", 2, 39.98, "shipped", datetime(2026, 1, 1, tzinfo=timezone.utc)),
-            (2, "Marcus Diallo", "Mechanical KB", 1, 129.00, "shipped", datetime(2026, 1, 2, tzinfo=timezone.utc)),
+            (1, "Ava Chen", "Wireless Mouse", 2, 39.98, "shipped", datetime(2026, 1, 1, tzinfo=UTC)),
+            (2, "Marcus Diallo", "Mechanical KB", 1, 129.00, "shipped", datetime(2026, 1, 2, tzinfo=UTC)),
         ]
         self.orders_table_exists = True
         self.undefined_table_error = _new_undefined_table_error()

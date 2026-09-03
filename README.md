@@ -38,9 +38,13 @@ lakebase-orders-app/
 ├── .databricks/bundle/prod/
 │   └── variables.json.example      # copy to variables.json and fill in your values
 ├── .github/workflows/ci.yml        # lint, test, validate, deploy
+├── docs/
+│   └── architecture.svg             # static architecture diagram used by README
 ├── setup/
 │   └── 01_create_source_table.sql  # creates the UC Delta source table (CDF enabled) to sync
 ├── scripts/
+│   ├── bootstrap.cmd               # cmd.exe wrapper for bootstrap checks
+│   ├── bootstrap.ps1               # Windows bootstrap: uv install + lint + tests
 │   ├── deploy.sh                   # validate + deploy helper
 │   └── validate.sh                 # validate-only helper
 ├── tests/                          # pytest suite against a mocked pool
@@ -76,6 +80,8 @@ lakebase-orders-app/
 - Workspace `CAN_MANAGE` permission on the project for your service principal.
 
 ## Architecture diagram
+
+![Orders Dashboard Architecture](docs/architecture.svg)
 
 ```mermaid
 flowchart LR
@@ -215,10 +221,29 @@ the `apps.lakebase_app` resource in `databricks.yml` — no secrets to manage.
 Copy `.env.example` to `.env`, fill in your endpoint details, then:
 
 ```bash
-make install          # creates .venv, installs app_src/requirements.txt
+uv --version          # ensure uv is installed: https://docs.astral.sh/uv/
+make install          # creates .venv with uv, installs app_src/requirements.txt
 export $(grep -v '^#' .env | xargs)   # or use direnv/python-dotenv
 databricks auth login --host https://<your-workspace>.cloud.databricks.com
 make run               # flask --app app run --debug --port 8000
+```
+
+For a one-command contributor setup check, run:
+
+```bash
+make bootstrap         # installs dev deps, then runs lint + tests
+```
+
+On Windows (without make), run:
+
+```powershell
+.\scripts\bootstrap.ps1
+```
+
+Or from `cmd.exe`:
+
+```bat
+scripts\bootstrap.cmd
 ```
 
 ## Testing & linting
@@ -236,6 +261,8 @@ CI runs the same two commands on every push/PR, then `databricks bundle
 validate` on PRs, and `databricks bundle deploy -t prod` on merges to `main`
 (see `.github/workflows/ci.yml`). To enable the deploy job, set these repo
 secrets: `DATABRICKS_HOST`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`.
+
+The CI job also installs dependencies with `uv` to match local Makefile workflows.
 
 ## Tearing down
 

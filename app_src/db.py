@@ -24,14 +24,20 @@ import time
 from dataclasses import dataclass
 
 import psycopg
-from psycopg_pool import ConnectionPool
-from databricks.sdk import WorkspaceClient
-
 from config import settings
+from databricks.sdk import WorkspaceClient
+from psycopg_pool import ConnectionPool
 
 log = logging.getLogger(__name__)
 
-_workspace_client = WorkspaceClient()
+_workspace_client: WorkspaceClient | None = None
+
+
+def _get_workspace_client() -> WorkspaceClient:
+    global _workspace_client
+    if _workspace_client is None:
+        _workspace_client = WorkspaceClient()
+    return _workspace_client
 
 
 class CredentialError(RuntimeError):
@@ -42,7 +48,7 @@ def _generate_credential_with_retry():
     last_exc: Exception | None = None
     for attempt in range(1, settings.credential_retries + 1):
         try:
-            return _workspace_client.postgres.generate_database_credential(
+            return _get_workspace_client().postgres.generate_database_credential(
                 endpoint=settings.endpoint_name
             )
         except Exception as exc:  # noqa: BLE001 - we deliberately want to retry on anything
@@ -170,7 +176,8 @@ def fetch_notes(page: int = 1, page_size: int | None = None) -> Page:
     with pool.connection() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT count(*) FROM notes")
-            total = cur.fetchone()[0]
+            count_row = cur.fetchone()
+            total = count_row[0] if count_row else 0
             cur.execute(
                 "SELECT id, content, created_at FROM notes "
                 "ORDER BY created_at DESC LIMIT %s OFFSET %s",
@@ -210,7 +217,8 @@ def fetch_orders(page: int = 1, page_size: int | None = None, search: str | None
         with conn.cursor() as cur:
             try:
                 cur.execute(f"SELECT count(*) FROM orders_synced {where_clause}", params)
-                total = cur.fetchone()[0]
+                count_row = cur.fetchone()
+                total = count_row[0] if count_row else 0
                 cur.execute(
                     f"""
                     SELECT order_id, customer, item, quantity, amount, status, ordered_at

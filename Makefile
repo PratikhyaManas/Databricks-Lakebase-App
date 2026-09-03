@@ -1,28 +1,34 @@
-.PHONY: install dev-install run test lint fmt validate deploy deploy-dev destroy clean
+.PHONY: bootstrap install dev-install run test lint fmt validate deploy deploy-dev destroy clean
 
 VENV := .venv
-PY := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
+BIN := $(VENV)/bin
+PY := $(BIN)/python
+UV := uv
 
-install:
-	python3 -m venv $(VENV)
-	$(PIP) install -q -r app_src/requirements.txt
+$(PY):
+	$(UV) venv $(VENV)
 
-dev-install:
-	python3 -m venv $(VENV)
-	$(PIP) install -q -r requirements-dev.txt
+bootstrap: dev-install
+	$(PY) -m ruff check app_src tests
+	$(PY) -m pytest -q
 
-run:
+install: $(PY)
+	$(UV) pip install --python $(PY) -r app_src/requirements.txt
+
+dev-install: $(PY)
+	$(UV) pip install --python $(PY) -r requirements-dev.txt
+
+run: install
 	cd app_src && ../$(PY) -m flask --app app run --debug --port 8000
 
 test: dev-install
-	$(VENV)/bin/pytest -q
+	$(PY) -m pytest -q
 
 lint: dev-install
-	$(VENV)/bin/ruff check app_src tests
+	$(PY) -m ruff check app_src tests
 
 fmt: dev-install
-	$(VENV)/bin/ruff format app_src tests
+	$(PY) -m ruff format app_src tests
 
 validate:
 	./scripts/validate.sh prod

@@ -10,9 +10,10 @@
 set -euo pipefail
 
 TARGET="${1:-prod}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Validating bundle for target: ${TARGET}"
-databricks bundle validate -t "${TARGET}"
+"${SCRIPT_DIR}/validate.sh" "${TARGET}"
 
 echo "==> Deploying bundle for target: ${TARGET}"
 databricks bundle deploy -t "${TARGET}"

@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-labelledby="title desc">
+  <title id="title">Orders Dashboard Architecture</title>
+  <desc id="desc">Architecture showing user browser, Databricks app, API, Lakebase endpoint, synced tables, and Unity Catalog integration.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; rx: 12; }
+      .service { fill: #e8f1ff; stroke: #3b82f6; stroke-width: 2; rx: 10; }
+      .data { fill: #ecfdf3; stroke: #16a34a; stroke-width: 2; rx: 10; }
+      .infra { fill: #fff7ed; stroke: #f97316; stroke-width: 2; rx: 10; }
+      .label { font: 600 18px Segoe UI, Arial, sans-serif; fill: #0f172a; }
+      .small { font: 500 14px Segoe UI, Arial, sans-serif; fill: #334155; }
+      .title { font: 700 28px Segoe UI, Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 500 16px Segoe UI, Arial, sans-serif; fill: #475569; }
+      .arrow { stroke: #475569; stroke-width: 2.2; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke-dasharray: 8 6; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto" markerUnits="strokeWidth">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1400" height="760" />
+
+  <text class="title" x="50" y="55">Orders Dashboard - Lakebase + Databricks Architecture</text>
+  <text class="subtitle" x="50" y="85">Databricks App reads synced operational data and writes user notes to Lakebase Postgres</text>
+
+  <rect class="panel" x="40" y="120" width="1320" height="590" />
+
+  <rect class="service" x="90" y="190" width="190" height="80" />
+  <text class="label" x="130" y="235">User Browser</text>
+
+  <rect class="service" x="350" y="170" width="300" height="110" />
+  <text class="label" x="430" y="220">Databricks App</text>
+  <text class="small" x="430" y="245">Flask Orders Dashboard</text>
+
+  <rect class="service" x="350" y="330" width="300" height="110" />
+  <text class="label" x="450" y="380">Routes and API</text>
+  <text class="small" x="430" y="405">/, /api/orders, /api/notes</text>
+
+  <rect class="infra" x="740" y="140" width="300" height="120" />
+  <text class="label" x="770" y="190">WorkspaceClient</text>
+  <text class="small" x="770" y="215">generate_database_credential</text>
+
+  <rect class="infra" x="1080" y="150" width="240" height="100" />
+  <text class="label" x="1110" y="195">Lakebase Endpoint</text>
+  <text class="small" x="1110" y="220">HA Read/Write</text>
+
+  <rect class="data" x="760" y="320" width="260" height="110" />
+  <text class="label" x="800" y="370">notes table</text>
+  <text class="small" x="800" y="395">OLTP app writes</text>
+
+  <rect class="data" x="1060" y="320" width="260" height="110" />
+  <text class="label" x="1080" y="370">orders_synced table</text>
+  <text class="small" x="1080" y="395">read by dashboard</text>
+
+  <rect class="infra" x="1060" y="500" width="260" height="100" />
+  <text class="label" x="1090" y="545">postgres_synced_tables</text>
+  <text class="small" x="1110" y="570">continuous sync</text>
+
+  <rect class="data" x="740" y="520" width="260" height="100" />
+  <text class="label" x="760" y="565">UC Delta source table</text>
+  <text class="small" x="760" y="590">main.sales.orders</text>
+
+  <rect class="infra" x="350" y="520" width="300" height="100" />
+  <text class="label" x="410" y="565">postgres_catalogs binding</text>
+  <text class="small" x="420" y="590">Lakebase DB as UC data</text>
+
+  <rect class="service" x="90" y="530" width="190" height="80" />
+  <text class="label" x="120" y="575">SQL and Notebooks</text>
+
+  <path class="arrow" d="M280 230 L350 225" />
+  <path class="arrow" d="M500 280 L500 330" />
+  <path class="arrow" d="M650 220 L740 200" />
+  <path class="arrow" d="M1040 200 L1080 200" />
+  <path class="arrow" d="M650 370 L760 370" />
+  <path class="arrow" d="M650 385 L1060 385" />
+  <path class="arrow" d="M1180 250 L1180 320" />
+  <path class="arrow" d="M760 570 L1060 550" />
+  <path class="arrow dashed" d="M1180 500 L1180 430" />
+  <path class="arrow" d="M350 570 L280 570" />
+
+  <text class="small" x="286" y="217">HTTPS</text>
+  <text class="small" x="520" y="314">calls</text>
+  <text class="small" x="680" y="206">mint OAuth DB credential</text>
+  <text class="small" x="900" y="353">write notes</text>
+  <text class="small" x="900" y="410">read synced orders</text>
+  <text class="small" x="1085" y="472">sync pipeline target</text>
+  <text class="small" x="500" y="505">analytics access</text>
+</svg>

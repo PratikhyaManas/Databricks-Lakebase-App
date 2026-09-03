@@ -1,100 +1,100 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="920" viewBox="0 0 1600 920" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="860" viewBox="0 0 1560 860" role="img" aria-labelledby="title desc">
   <title id="title">Orders Dashboard Architecture</title>
-  <desc id="desc">Parity SVG for the Mermaid architecture: user browser, Databricks app, routes and API, Lakebase endpoint, synced tables, Unity Catalog binding, and SQL warehouses and notebooks.</desc>
+  <desc id="desc">SVG architecture diagram equivalent to the Mermaid graph in README.</desc>
 
   <defs>
     <style>
-      .bg { fill: #f6f8fb; }
+      .bg { fill: #f7f9fc; }
+      .frame { fill: #ffffff; stroke: #d7dee8; stroke-width: 1.5; }
       .title { font: 700 30px Segoe UI, Arial, sans-serif; fill: #0f172a; }
-      .sub { font: 500 16px Segoe UI, Arial, sans-serif; fill: #475569; }
+      .subtitle { font: 500 15px Segoe UI, Arial, sans-serif; fill: #475569; }
 
-      .lane-app { fill: #eef4ff; stroke: #c6d7ff; }
-      .lane-lakebase { fill: #f2fff7; stroke: #bde8cc; }
-      .lane-analytics { fill: #fff8f1; stroke: #ffd7b8; }
-      .lane-title { font: 700 14px Segoe UI, Arial, sans-serif; fill: #334155; letter-spacing: 0.4px; }
-
-      .node-stroke { stroke-width: 2; }
-      .svc { fill: #ffffff; stroke: #3b82f6; }
-      .infra { fill: #ffffff; stroke: #f97316; }
-      .data { fill: #ffffff; stroke: #16a34a; }
+      .appNode { fill: #eef4ff; stroke: #3b82f6; }
+      .infraNode { fill: #fff5eb; stroke: #ea580c; }
+      .dataNode { fill: #ecfdf3; stroke: #16a34a; }
+      .node { stroke-width: 2; }
 
       .label { font: 700 18px Segoe UI, Arial, sans-serif; fill: #0f172a; }
-      .line { font: 600 14px Segoe UI, Arial, sans-serif; fill: #334155; }
+      .sub { font: 600 14px Segoe UI, Arial, sans-serif; fill: #334155; }
 
-      .edge { stroke: #334155; stroke-width: 2.4; fill: none; marker-end: url(#arrowhead); }
+      .edge { stroke: #334155; stroke-width: 2.3; fill: none; marker-end: url(#arrow); }
     </style>
-
-    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="8.5" refY="3.5" orient="auto" markerUnits="strokeWidth">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#334155" />
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#334155" />
     </marker>
   </defs>
 
-  <rect class="bg" x="0" y="0" width="1600" height="920" />
+  <rect class="bg" x="0" y="0" width="1560" height="860" />
+  <rect class="frame" x="24" y="24" width="1512" height="812" rx="12" />
 
-  <text class="title" x="46" y="58">Orders Dashboard Architecture (SVG)</text>
-  <text class="sub" x="46" y="86">This SVG mirrors the README Mermaid graph node names and edge flow one-to-one.</text>
+  <text class="title" x="56" y="74">Orders Dashboard - Lakebase + Databricks</text>
+  <text class="subtitle" x="56" y="102">Static SVG version aligned to the Mermaid architecture graph in this README.</text>
 
-  <rect class="lane-app" x="40" y="122" width="500" height="730" rx="12" />
-  <rect class="lane-lakebase" x="560" y="122" width="700" height="730" rx="12" />
-  <rect class="lane-analytics" x="1280" y="122" width="280" height="730" rx="12" />
+  <rect class="node appNode" x="76" y="180" width="170" height="78" rx="12" />
+  <text class="label" x="100" y="227">User Browser</text>
 
-  <text class="lane-title" x="58" y="148">APPLICATION</text>
-  <text class="lane-title" x="578" y="148">LAKEBASE + SYNC</text>
-  <text class="lane-title" x="1298" y="148">ANALYTICS</text>
+  <rect class="node appNode" x="296" y="158" width="238" height="108" rx="12" />
+  <text class="label" x="330" y="210">Databricks App</text>
+  <text class="sub" x="324" y="235">Flask Orders Dashboard</text>
 
-  <rect class="svc node-stroke" x="76" y="210" width="180" height="86" rx="14" />
-  <text class="label" x="105" y="260">User Browser</text>
+  <polygon class="node appNode" points="292,336 520,336 546,394 266,394" />
+  <text class="label" x="311" y="370">Routes and JSON API</text>
+  <text class="sub" x="308" y="388">/, /api/orders, /api/notes</text>
 
-  <rect class="svc node-stroke" x="306" y="188" width="220" height="118" rx="14" />
-  <text class="label" x="343" y="240">Databricks App</text>
-  <text class="line" x="341" y="266">Flask Orders Dashboard</text>
+  <rect class="node infraNode" x="618" y="158" width="252" height="108" rx="12" />
+  <text class="label" x="654" y="208">WorkspaceClient</text>
+  <text class="sub" x="648" y="233">Generate DB Credential</text>
 
-  <polygon class="svc node-stroke" points="308,372 510,372 528,426 290,426" />
-  <text class="label" x="338" y="405">Routes and JSON API</text>
-  <text class="line" x="323" y="421">/, /api/orders, /api/notes</text>
+  <rect class="node infraNode" x="930" y="158" width="334" height="108" rx="12" />
+  <text class="label" x="970" y="208">Lakebase Endpoint</text>
+  <text class="sub" x="955" y="233">HA Read/Write + Readable Secondaries</text>
 
-  <rect class="infra node-stroke" x="646" y="194" width="246" height="112" rx="14" />
-  <text class="label" x="685" y="244">WorkspaceClient</text>
-  <text class="line" x="671" y="269">Generate DB Credential</text>
+  <g>
+    <ellipse class="node dataNode" cx="744" cy="352" rx="132" ry="24" />
+    <rect class="node dataNode" x="612" y="352" width="264" height="82" />
+    <ellipse class="node dataNode" cx="744" cy="434" rx="132" ry="24" />
+    <text class="label" x="665" y="390">Lakebase Postgres</text>
+    <text class="sub" x="700" y="413">notes table</text>
+  </g>
 
-  <rect class="infra node-stroke" x="940" y="194" width="298" height="112" rx="14" />
-  <text class="label" x="984" y="244">Lakebase Endpoint</text>
-  <text class="line" x="958" y="269">HA Read/Write + Readable Secondaries</text>
+  <g>
+    <ellipse class="node dataNode" cx="1098" cy="352" rx="166" ry="24" />
+    <rect class="node dataNode" x="932" y="352" width="332" height="82" />
+    <ellipse class="node dataNode" cx="1098" cy="434" rx="166" ry="24" />
+    <text class="label" x="1007" y="390">Lakebase Postgres</text>
+    <text class="sub" x="1022" y="413">orders_synced table</text>
+  </g>
 
-  <rect class="data node-stroke" x="644" y="384" width="246" height="112" rx="56" />
-  <text class="label" x="688" y="437">Lakebase Postgres</text>
-  <text class="line" x="735" y="462">notes table</text>
+  <rect class="node infraNode" x="954" y="524" width="288" height="104" rx="12" />
+  <text class="label" x="984" y="574">postgres_synced_tables</text>
+  <text class="sub" x="1048" y="599">continuous sync</text>
 
-  <rect class="data node-stroke" x="942" y="384" width="296" height="112" rx="56" />
-  <text class="label" x="999" y="437">Lakebase Postgres</text>
-  <text class="line" x="1022" y="462">orders_synced table</text>
+  <g>
+    <ellipse class="node dataNode" cx="744" cy="548" rx="132" ry="24" />
+    <rect class="node dataNode" x="612" y="548" width="264" height="78" />
+    <ellipse class="node dataNode" cx="744" cy="626" rx="132" ry="24" />
+    <text class="label" x="637" y="584">Unity Catalog Delta Table</text>
+    <text class="sub" x="662" y="606">main.sales.orders with CDF</text>
+  </g>
 
-  <rect class="infra node-stroke" x="954" y="566" width="274" height="106" rx="14" />
-  <text class="label" x="983" y="617">postgres_synced_tables</text>
-  <text class="line" x="1034" y="642">continuous sync</text>
+  <rect class="node infraNode" x="806" y="694" width="284" height="104" rx="12" />
+  <text class="label" x="840" y="744">postgres_catalogs</text>
+  <text class="sub" x="878" y="768">UC Binding</text>
 
-  <rect class="data node-stroke" x="644" y="566" width="246" height="106" rx="56" />
-  <text class="label" x="675" y="615">Unity Catalog Delta Table</text>
-  <text class="line" x="700" y="640">main.sales.orders (CDF)</text>
+  <rect class="node appNode" x="1240" y="706" width="250" height="86" rx="12" />
+  <text class="label" x="1270" y="742">SQL Warehouses and</text>
+  <text class="label" x="1322" y="765">Notebooks</text>
 
-  <rect class="infra node-stroke" x="816" y="724" width="254" height="104" rx="14" />
-  <text class="label" x="848" y="773">postgres_catalogs</text>
-  <text class="line" x="891" y="798">UC Binding</text>
-
-  <rect class="svc node-stroke" x="1314" y="736" width="212" height="86" rx="14" />
-  <text class="label" x="1337" y="770">SQL Warehouses</text>
-  <text class="line" x="1363" y="794">and Notebooks</text>
-
-  <path class="edge" d="M256 252 L306 246" />
-  <path class="edge" d="M416 306 L410 372" />
-  <path class="edge" d="M526 236 L646 236" />
-  <path class="edge" d="M892 236 L940 236" />
-  <path class="edge" d="M528 404 L644 434" />
-  <path class="edge" d="M528 414 L942 434" />
-  <path class="edge" d="M1089 306 L765 384" />
-  <path class="edge" d="M1089 306 L1090 384" />
-  <path class="edge" d="M890 619 L954 619" />
-  <path class="edge" d="M1090 672 L1090 496" />
-  <path class="edge" d="M1090 306 L944 724" />
-  <path class="edge" d="M1070 776 L1314 779" />
+  <path class="edge" d="M246 219 L296 212" />
+  <path class="edge" d="M416 266 L406 336" />
+  <path class="edge" d="M534 212 L618 212" />
+  <path class="edge" d="M870 212 L930 212" />
+  <path class="edge" d="M546 368 L612 392" />
+  <path class="edge" d="M546 384 L932 392" />
+  <path class="edge" d="M1096 266 L744 328" />
+  <path class="edge" d="M1098 266 L1098 328" />
+  <path class="edge" d="M876 586 L954 576" />
+  <path class="edge" d="M1098 524 L1098 458" />
+  <path class="edge" d="M1098 266 L948 694" />
+  <path class="edge" d="M1090 746 L1240 748" />
 </svg>
